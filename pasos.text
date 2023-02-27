@@ -1,0 +1,127 @@
+0. Ir a Config.php y cambiar el nombre de la base de datos a la que se quiere conectar.
+
+1. Crear Objetos (Carpeta Models que tambien se crea). Si tiene atributos es un objeto.
+
+En el constructor igualar los parametros a null. Ejemplo: 'public function __construct($id = null, $name = null)'.
+
+Recordar poner el namespace con el nombre del archivo en la carpeta Models.
+
+En los sets autogenerados borrar los returns y el :self de la función.
+
+2. Crear DAO.
+3. Crear Controladores.
+4. Editar vistas.
+
+********** ASPECTOS DE LAS VISTAS **********
+
+Se deben poner los inputs necesarios dentro del form y poner a estos el name.
+Los names tienen que ser iguales a los parametros que pide la funcion del controller.
+Poner action y method en el form.
+El method siempre va a ser POST.
+El action de pone de la siguiente manera: 
+
+'action="<?php echo FRONT_ROOT . "<nombre del controller sin 'Controller al final'>/<nombre de la funcion del controller>" ?>"'
+
+Ejemplo: 'action="<?php echo FRONT_ROOT . 'Home/Login' ?>"'. Es el HomeController método Login.
+
+IMPORTANTISIMO: El orden de los names tiene que ser igual al de los parametros de la funcion del controller.
+
+PONER EN NAV LOS LINKS QUE CAMBIAMOS. IGUAL QUE EN EL ACTION DEL FORM.
+
+El name va en el select no en el option
+
+LAS VISTAS ME LLEVAN AL MÉTODO QUE PROCESA LOS PARAMETROS QUE LE PASO POR POST (DATOS QUE INGRESA EL USUARIO).
+
+SI QUIERO ENVIAR A UNA VISTA USO LOS MÉTODOS TERMINADOS EN VIEW 
+
+ESTANDO EN EL OPTION:
+
+En el value se guarda el id del objeto que se quiere seleccionar.
+La descripcion de ese objeto se pone entre las etiquetas. Ejemplo:
+
+                                   <select class="form-control" name="orderStatusId">
+
+                                        <option disabled selected>Seleccionar...</option>
+
+                                        <?php foreach($statusList as $status){?>
+                                             
+                                        <option value="<?php $status->getOrderStatusId()?>"><?php echo $status->getDescription()?></option>
+
+                                        <?php }?>
+                                   </select>
+
+
+********** ASPECTOS DE LOS DAO Y SUS FUNCIONES (EJEMPLO OrderDAO) **********
+
+Siempre que se crea un controlador para un Modelo, se necesita un DAO que me traiga el objeto o lista objetos que necesito.
+Si el DAO no devuelve nada (porque no hay nada o esta mal la query) tiene que devolver un null.
+Es decir, creo un Modelo User, luego un DAO User y por ultimo el controller.
+
+Todos los DAOs tienen que tener la palabra DAO al final (UserDAO, OrderDAO, etc).
+En cada DAO tiene que estar SI O SI las funciones: Get, GetAll, Add, Update, Delete.
+
+La funcion Get recibe un id y devuelve un objeto.
+La funcion GetAll devuelve una lista de objetos.
+La funcion Add recibe un objeto y lo agrega a la base de datos.
+La funcion Update recibe un objeto y lo actualiza en la base de datos.
+La funcion Delete recibe un id y lo elimina de la base de datos.
+
+RECORDAR: Importar el modelo ya creado al principio del DAO, no crear uno nuevo. Ejemplo: 'use Models\User as User';
+
+IMPORTANTE: El DAO siempre tiene un atributo $connection que es el que se encarga de la conexion a la base de datos.
+
+
+********** PASOS PARA TIRAR UNA QUERY CON GET (Ejemplo en UserDAO) **********
+
+1. Crear la query en el DAO (Es un String) y seteamos parametros opcionales.
+
+La Query puede tener parametros o no. En el caso de tenerlos se crea un array con los parametros.
+Los parametros se ponen con : en la query.
+
+Sintaxix: $parameters[<nombre del parametro en formato string>] = <valor del parametro>;
+Ejemplo: '$parameters['id'] = $id;' En la query se pone :id.
+
+2. Se conecta a la base de datos con el atributo $connection. '$this->connection = Connection::GetInstance();'
+
+Se usa el $this porque connection es un atributo de la clase.
+
+3. Creo el objeto o la lista y la igualo a null (esto es en donde se va a guardar el o los datos para retornarlos).
+
+Si es un GetAll guardo los datos en una lista.
+
+4. Creo un try catch para atrapar errores.
+
+Dentro del try se ejecuta la query. Con los gets se utiliza el método Execute() 
+y con los add, update y delete se utiliza el método ExecuteNonQuery().
+
+Si utilizamos parametros se ponen como segundo parametro en la funcion.
+Ejemplo: '$this->connection->Execute($query, $parameters)';
+
+El método me va a devolver un array que simboliza la tabla sql. Tengo que recorrer esa tabla y mapear el objeto.
+Es decir, me devuelve un set de resultados que guardo en una variable.
+
+5. Se mapea el objeto o la lista. 
+
+Si me devulve un result set con un solo objeto no se recorre nada y se mapea directamente.
+Si me devuelve un result set con varios objetos se recorre el result set y se mapea cada objeto.
+Cada objeto se agrega a la lista.
+
+********** ASPECTOS DE LOS CONTROLLERS **********
+
+Siempre se empieza por HomeController.
+
+HomeController se encarga del Index, Login y Logout.
+
+En los controllers tenemos tres tipos de funciones:
+
+*Funciones para llamar a las vistas.
+*Funciones para pedir datos al DAO.
+*Funciones varias para modularizar y no sobrecargar lo anterior.
+
+Crear atributos de los DAOs que se van a usar en el controller.
+Siempre que se crea un Controller se tiene que crear un constructor que inicialize los DAOs que se van a usar.
+
+Las funciones que llaman a las vistas tienen la palabra View al final (orderPendingView, AddPendingView, etc).
+En las funciones de vistas siempre chequear que haya una sesión activa, sino redirigir al index de home.
+
+NO HACE FALTA UN CONTROLLER POR CADA MODELO. UN CONTROLLER PUEDE LLAMAR A VARIOS DAOs PERO NO A OTROS CONTROLLERS.
